@@ -12,37 +12,126 @@ def encontra_jogador(mapa)
 	mapa.each_with_index do |linha_atual, linha|
 		coluna_do_heroi = linha_atual.index caractere_do_heroi
 		if coluna_do_heroi
-			return [linha, coluna_do_heroi]
+			return [linha, coluna_do_heroi].to_a
 		end
+
 	end
+	nil
 end
 
 def calcula_nova_posicao(heroi,direcao)
 
-case direcao.upcase
-			when "W"
-				heroi[0] -= 1
-			when "S"
-				heroi[0] += 1
-			when "A"
-				heroi[1] -= 1
-			when "D"
-				heroi[1] += 1
-end
+	heroi = heroi.dup
+	movimentos = {
+		"W" => [-1,0],
+		"S" => [+1,0],
+		"D" => [0,+1],
+		"A" => [0,-1]
+	}
+
+	movimento = movimentos[direcao.upcase]
+	heroi[0] += movimento[0]
+	heroi[1] += movimento[1]
+	heroi
 
 end
+
+
+def posicao_valida?(mapa, posicao)
+
+		estourou_linhas = posicao[0] < 0 || posicao[0] >= mapa.size
+		estourou_colunas = posicao[1] < 0 || posicao[1] >= mapa[0].size
+
+		if estourou_linhas
+			return false
+		end
+		if estourou_colunas
+			return false
+		end
+		valor_atual = mapa[posicao[0]][posicao[1]] 
+		if valor_atual == "X" || valor_atual == "F"
+			return false
+		end
+		true
+end
+
+def soma_vetor(movimento,posicao)
+	[posicao[0] + movimento[0],posicao[1] + movimento[1]]
+end
+
+def posicoes_validas(mapa,novo_mapa,posicao)
+	posicoes = []
+	movimentos = [[+1,0],[0,+1],[-1,0],[0,-1]]
+	movimentos.each do |movimento|
+		nova_posicao = soma_vetor movimento, posicao
+		if posicao_valida?(mapa,nova_posicao) && posicao_valida?(novo_mapa,nova_posicao)
+			posicoes << nova_posicao
+		end
+	end
+	posicoes
+end
+
+
+def move_fantasma(mapa, novo_mapa, linha, coluna)
+
+	posicoes = posicoes_validas mapa, novo_mapa, [linha,coluna]
+ 	return	if posicoes.empty?
+ 	aleatoria = rand posicoes.size
+	posicao = posicoes[aleatoria]
+
+	mapa[linha][coluna] = " "
+	novo_mapa[posicao[0]][posicao[1]] = "F"
+end
+
+
+def copia_mapa(mapa)
+
+	novo_mapa = mapa.join("\n").tr("F"," ").split("\n")
+
+end
+
+def move_fantasmas(mapa)
+
+	caractare_fantasma = "F"
+	novo_mapa = copia_mapa mapa
+	mapa.each_with_index do |linha_atual, linha|
+		linha_atual.chars.each_with_index do  |caractare_atual, coluna|
+			eh_fantasma = caractare_atual == caractare_fantasma
+			if eh_fantasma
+				move_fantasma mapa, novo_mapa, linha, coluna
+			end
+		end
+
+	end
+
+novo_mapa
+
+end
+
+
 
 def joga(nome)
 
-	mapa = le_mapa 1
+
+
+	mapa = le_mapa 2
 
 	while true
 		desenha_mapa mapa
 		direcao = pede_movimento
 		heroi = encontra_jogador mapa
-		mapa[heroi[0]][heroi[1]] = " "
 		nova_posicao = calcula_nova_posicao heroi,direcao
-		mapa[heroi[0]][heroi[1]] = "H"
+		next if not posicao_valida? mapa,nova_posicao
+		mapa[heroi[0]][heroi[1]] = " "
+		mapa[nova_posicao[0]][nova_posicao[1]] = "H"
+
+
+		mapa = move_fantasmas mapa
+		if not encontra_jogador mapa
+			game_over
+			break
+		end
+
 	end
 	
 
