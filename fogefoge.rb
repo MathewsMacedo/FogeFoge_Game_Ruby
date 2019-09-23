@@ -97,13 +97,32 @@ def move_fantasmas(mapa)
 
 end
 
+def executa_remocao (mapa, posicao,quantidade)
+	return if mapa[posicao.linha][posicao.coluna] == "X"
+	posicao.remove_do mapa
+	remove mapa,posicao,quantidade -1
+	
+
+
+end
+
+
+def remove (mapa, posicao, quantidade)
+	return if quantidade == 0
+
+	executa_remocao mapa,posicao.direita,quantidade
+	executa_remocao mapa,posicao.baixo,quantidade
+	executa_remocao mapa,posicao.esquerda,quantidade
+	executa_remocao mapa,posicao.cima,quantidade
+end
+
 
 
 def joga(nome)
 
 
 
-	mapa = le_mapa 2
+	mapa = le_mapa 4
 
 	while true
 		desenha_mapa mapa
@@ -112,6 +131,9 @@ def joga(nome)
 		nova_posicao = heroi.calcula_nova_posicao direcao
 		next if not posicao_valida? mapa,nova_posicao.to_array
 		heroi.remove_do mapa
+		if mapa[nova_posicao.linha][nova_posicao.coluna] == "*"
+			remove mapa, nova_posicao, 4
+		end
 		nova_posicao.coloca_no mapa
 		mapa = move_fantasmas mapa
 		if not encontra_jogador mapa
