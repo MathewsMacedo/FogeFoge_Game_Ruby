@@ -1,4 +1,5 @@
 require_relative 'ui'
+require_relative 'heroi'
 
 def le_mapa(numero)
 	arquivo = "mapa#{numero}.txt"
@@ -12,47 +13,35 @@ def encontra_jogador(mapa)
 	mapa.each_with_index do |linha_atual, linha|
 		coluna_do_heroi = linha_atual.index caractere_do_heroi
 		if coluna_do_heroi
-			return [linha, coluna_do_heroi].to_a
+			jogador = Heroi.new
+			jogador.linha = linha
+			jogador.coluna = coluna_do_heroi
+			return jogador
 		end
 
 	end
 	nil
 end
 
-def calcula_nova_posicao(heroi,direcao)
 
-	heroi = heroi.dup
-	movimentos = {
-		"W" => [-1,0],
-		"S" => [+1,0],
-		"D" => [0,+1],
-		"A" => [0,-1]
-	}
-
-	movimento = movimentos[direcao.upcase]
-	heroi[0] += movimento[0]
-	heroi[1] += movimento[1]
-	heroi
-
-end
 
 
 def posicao_valida?(mapa, posicao)
 
-		estourou_linhas = posicao[0] < 0 || posicao[0] >= mapa.size
-		estourou_colunas = posicao[1] < 0 || posicao[1] >= mapa[0].size
+	estourou_linhas = posicao[0] < 0 || posicao[0] >= mapa.size
+	estourou_colunas = posicao[1] < 0 || posicao[1] >= mapa[0].size
 
-		if estourou_linhas
-			return false
-		end
-		if estourou_colunas
-			return false
-		end
-		valor_atual = mapa[posicao[0]][posicao[1]] 
-		if valor_atual == "X" || valor_atual == "F"
-			return false
-		end
-		true
+	if estourou_linhas
+		return false
+	end
+	if estourou_colunas
+		return false
+	end
+	valor_atual = mapa[posicao[0]][posicao[1]] 
+	if valor_atual == "X" || valor_atual == "F"
+		return false
+	end
+	true
 end
 
 def soma_vetor(movimento,posicao)
@@ -75,8 +64,8 @@ end
 def move_fantasma(mapa, novo_mapa, linha, coluna)
 
 	posicoes = posicoes_validas mapa, novo_mapa, [linha,coluna]
- 	return	if posicoes.empty?
- 	aleatoria = rand posicoes.size
+	return	if posicoes.empty?
+	aleatoria = rand posicoes.size
 	posicao = posicoes[aleatoria]
 
 	mapa[linha][coluna] = " "
@@ -104,7 +93,7 @@ def move_fantasmas(mapa)
 
 	end
 
-novo_mapa
+	novo_mapa
 
 end
 
@@ -120,12 +109,10 @@ def joga(nome)
 		desenha_mapa mapa
 		direcao = pede_movimento
 		heroi = encontra_jogador mapa
-		nova_posicao = calcula_nova_posicao heroi,direcao
-		next if not posicao_valida? mapa,nova_posicao
-		mapa[heroi[0]][heroi[1]] = " "
-		mapa[nova_posicao[0]][nova_posicao[1]] = "H"
-
-
+		nova_posicao = heroi.calcula_nova_posicao direcao
+		next if not posicao_valida? mapa,nova_posicao.to_array
+		heroi.remove_do mapa
+		nova_posicao.coloca_no mapa
 		mapa = move_fantasmas mapa
 		if not encontra_jogador mapa
 			game_over
